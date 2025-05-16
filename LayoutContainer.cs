@@ -11,6 +11,7 @@ using System.Windows.Forms.Design;
 using System.Windows.Forms;
 using System.Collections;
 using System.Diagnostics;
+using LayoutDemo.Controls.Design;
 
 namespace LayoutDemo
 {
@@ -885,7 +886,7 @@ namespace LayoutDemo
             int secondHorizontalSplit = borderOffset + (int)(availableWidth * secondHorizontalSplitterDistance);
             int secondVerticalSplit = borderOffset + (int)(availableHeight * secondVerticalSplitterDistance);
 
-            int horizontalSpacing = (int)Math.Ceiling( availableWidth * 0.05d);
+            int horizontalSpacing = (int)Math.Ceiling(availableWidth * 0.05d);
             int verticalSpacing = (int)Math.Ceiling(availableHeight * 0.05d);
 
             // 确保分隔位置有效
@@ -1638,6 +1639,16 @@ namespace LayoutDemo
             Control.PaintSplitters(pe);
         }
 
+        public override DesignerActionListCollection ActionLists
+        {
+            get
+            {
+                DesignerActionListCollection actionLists = new DesignerActionListCollection();
+                actionLists.Add(new LayoutContainerActionList(Control));
+                return actionLists;
+            }
+        }
+
         /// <summary>
         /// 清理设计器资源
         /// </summary>
@@ -1647,6 +1658,131 @@ namespace LayoutDemo
             _changeService = null;
 
             base.Dispose(disposing);
+        }
+    }
+
+
+    public class LayoutContainerActionList : DesignerActionList
+    {
+        private LayoutContainer layoutContainer;
+        private readonly IDesignerHost _host;
+        private bool isDocked = false;
+
+        public LayoutContainerActionList(IComponent component) : base(component)
+        {
+            layoutContainer = component as LayoutContainer;
+            _host = GetService(typeof(IDesignerHost)) as IDesignerHost;
+            isDocked = layoutContainer.Dock == DockStyle.Fill;
+        }
+
+        //private string GetActionName()
+        //{
+        //    if (Component is null)
+        //    {
+        //        return null;
+        //    }
+
+        //    PropertyDescriptor dockProp = GetPropertyByName("Dock");
+        //    if (dockProp != null)
+        //    {
+        //        DockStyle dockStyle = (DockStyle)dockProp.GetValue(layoutContainer);
+        //        if (dockStyle == DockStyle.Fill)
+        //        {
+        //            return "取消在父容器中停靠";
+        //        }
+        //        else
+        //        {
+        //            return "在父容器中停靠";
+        //        }
+        //    }
+
+        //    return null;
+        //}
+
+
+        public LayoutMode LayoutMode
+        {
+            get => layoutContainer.LayoutModeValue;
+            set
+            {
+                PropertyDescriptor property = TypeDescriptor.GetProperties(layoutContainer)["LayoutModeValue"];
+                GetPropertyByName("LayoutModeValue").SetValue(layoutContainer, value);
+
+            }
+        }
+
+
+
+        public void ToggleDockInParent()
+        {
+            if (layoutContainer.Parent == null)
+            {
+                return;
+            }
+            if (!isDocked)
+            {
+                layoutContainer.Dock = DockStyle.Fill;
+                isDocked = true;
+            }
+            else
+            {
+                layoutContainer.Dock = DockStyle.None;
+                isDocked = false;
+            }
+
+        }
+
+        //public override DesignerActionItemCollection GetSortedActionItems()
+        //{
+        //    DesignerActionItemCollection items = new DesignerActionItemCollection();
+        //    string? actionName = GetActionName();
+        //    if (actionName is not null)
+        //    {
+        //        items.Add(new DesignerActionVerbItem(new DesignerVerb(actionName, OnDockActionClick)));
+        //    }
+
+        //    return items;
+        //}
+
+
+        public override DesignerActionItemCollection GetSortedActionItems()
+        {
+            var items = new DesignerActionItemCollection
+            {
+                new DesignerActionHeaderItem("布局设置"),
+                new DesignerActionPropertyItem("LayoutMode", "布局模式", "布局设置", "选择控件的布局模式"),
+                new DesignerActionMethodItem(this, "ToggleDockInParent", isDocked ? "取消在父容器中停靠" : "在父容器中停靠", "布局设置", "设置停靠选项", true)
+
+                //items.Add(new DesignerActionVerbItem(new DesignerVerb(actionName, OnDockActionClick)));
+            };
+
+            return items;
+        }
+
+
+        //private void OnDockActionClick(object sender, EventArgs e)
+        //{
+        //    if (sender is DesignerVerb designerVerb && _host!= null)
+        //    {
+        //        using (DesignerTransaction t = _host.CreateTransaction(designerVerb.Text))
+        //        {
+        //            PropertyDescriptor dockProp = GetPropertyByName("Dock");
+        //            DockStyle dockStyle = (DockStyle)dockProp.GetValue(layoutContainer);
+        //            dockProp.SetValue(layoutContainer, dockStyle == DockStyle.Fill ? DockStyle.None : DockStyle.Fill);
+        //            t.Commit();
+        //        }
+        //    }
+        //}
+
+
+        private PropertyDescriptor GetPropertyByName(string propName)
+        {
+            PropertyDescriptor prop = TypeDescriptor.GetProperties(layoutContainer)[propName];
+            if (prop == null)
+            {
+                throw new ArgumentException("未找到属性", propName);
+            }
+            return prop;
         }
     }
 
