@@ -11,7 +11,6 @@ using System.Windows.Forms.Design;
 using System.Windows.Forms;
 using System.Collections;
 using System.Diagnostics;
-using LayoutDemo.Controls.Design;
 
 namespace LayoutDemo
 {
@@ -39,25 +38,17 @@ namespace LayoutDemo
         private Point dragStartPoint;
         private int activeSplitter = -1;
 
-
-        private bool isResizing = false;
-        private int resizingEdge = -1; // 0=上, 1=右, 2=下, 3=左
-        private Point lastMousePosition;
-        private const int RESIZE_BORDER_WIDTH = 5; // 拖动边缘的宽度(像素)
-
-
-        // 分隔条覆盖层对象
-        //private SplitterLayer _splitterOverlay = null;
         private bool showBorder = true;
         private int borderSize = 1;
         private Color borderColor = Color.DarkGray;
-
 
         // 格子可见性控制
         private bool showTopPanel = true;
         private bool showBottomPanel = true;
         private bool showLeftPanel = true;
         private bool showRightPanel = true;
+
+        private const int RESIZE_BORDER_WIDTH = 5; // 拖动边缘的宽度(像素)
 
         #endregion
 
@@ -84,7 +75,6 @@ namespace LayoutDemo
                 gridCells[i].Visible = false;
                 Controls.Add(gridCells[i]);
             }
-
 
             // 默认垂直布局
             UpdateLayoutPositions();
@@ -385,7 +375,6 @@ namespace LayoutDemo
             }
         }
 
-
         /// <summary>
         /// 获取第一个格子
         /// </summary>
@@ -436,7 +425,6 @@ namespace LayoutDemo
         #endregion
 
         #region 公共方法
-
 
         /// <summary>
         /// 获取指定点处的分隔条索引
@@ -594,8 +582,9 @@ namespace LayoutDemo
         public LayoutPosition GetPositionByGridIndex(int gridIndex)
         {
             if (gridIndex < 1 || gridIndex > 4)
+            {
                 throw new ArgumentOutOfRangeException(nameof(gridIndex), "GridIndex必须在1到4之间");
-
+            }
             return gridCells[gridIndex - 1].Position;
         }
 
@@ -605,8 +594,9 @@ namespace LayoutDemo
         public void SetPositionByGridIndex(int gridIndex, LayoutPosition position)
         {
             if (gridIndex < 1 || gridIndex > 4)
+            {
                 throw new ArgumentOutOfRangeException(nameof(gridIndex), "GridIndex必须在1到4之间");
-
+            }
             if (layoutMode == LayoutMode.Custom)
             {
                 gridCells[gridIndex - 1].Position = position;
@@ -670,8 +660,9 @@ namespace LayoutDemo
             {
                 var cell = gridCells[i];
                 if (!cell.Visible)
+                {
                     continue;
-
+                }
                 Rectangle bounds = cell.Bounds;
 
                 // 检查上边缘
@@ -1351,13 +1342,20 @@ namespace LayoutDemo
                         float newDistance = (float)e.Y / Height;
                         newDistance = Math.Max(0.1f, Math.Min(0.9f, newDistance));
 
-                        if (activeSplitter == 0)
+                        if (LayoutModeValue == LayoutMode.Vertical || LayoutModeValue == LayoutMode.Horizontal)
                         {
-                            VerticalSplitterDistance = newDistance;
+                            if (activeSplitter == 0)
+                            {
+                                VerticalSplitterDistance = newDistance;
+                            }
+                            else
+                            {
+                                SecondVerticalSplitterDistance = newDistance;
+                            }
                         }
                         else
                         {
-                            SecondVerticalSplitterDistance = newDistance;
+                            VerticalSplitterDistance = newDistance;
                         }
                     }
                     // 调整垂直分隔条
@@ -1365,14 +1363,23 @@ namespace LayoutDemo
                     {
                         float newDistance = (float)e.X / Width;
                         newDistance = Math.Max(0.1f, Math.Min(0.9f, newDistance));
-                        if (activeSplitter == 0)
+
+                        if (LayoutModeValue == LayoutMode.Vertical || LayoutModeValue == LayoutMode.Horizontal)
                         {
-                            HorizontalSplitterDistance = newDistance;
+                            if (activeSplitter == 0)
+                            {
+                                HorizontalSplitterDistance = newDistance;
+                            }
+                            else
+                            {
+                                SecondHorizontalSplitterDistance = newDistance;
+                            }
                         }
                         else
                         {
-                            SecondHorizontalSplitterDistance = newDistance;
+                            HorizontalSplitterDistance = newDistance;
                         }
+
                     }
 
                     PerformLayout();
@@ -1396,394 +1403,6 @@ namespace LayoutDemo
 
         #endregion
 
-    }
-
-    /// <summary>
-    /// 布局模式枚举 - 支持多种灵活布局方式
-    /// </summary>
-    public enum LayoutMode
-    {
-        // 垂直布局 - 所有区域纵向排列
-        Vertical,
-
-        // 水平布局 - 所有区域横向排列
-        Horizontal,
-
-        // 网格布局 - 田字格形状布局
-        Grid,
-
-        // 上部区域一格占满，下部分为左右两个区域
-        TopSpan,
-
-        // 下部区域一格占满，上部分为左右两个区域
-        BottomSpan,
-
-        // 左部区域一格占满，右部分为上下两个区域
-        LeftSpan,
-
-        // 右部区域一格占满，左部分为上下两个区域
-        RightSpan,
-
-        // 自定义布局 - 支持多种灵活布局方式
-        Custom
-    }
-
-    /// <summary>
-    /// 布局位置枚举 - 支持1-4格灵活布局
-    /// </summary>
-    public enum LayoutPosition
-    {
-        // 顶部位置
-        Top,
-
-        // 底部位置
-        Bottom,
-
-        // 左侧位置
-        Left,
-
-        // 右侧位置
-        Right,
-
-        // 中心位置
-        Center,
-
-        // 左上位置
-        TopLeft,
-
-        // 右上位置
-        TopRight,
-
-        // 左下位置
-        BottomLeft,
-
-        // 右下位置
-        BottomRight,
-
-        // 未指定位置(不显示)
-        None
-    }
-
-
-
-    /// <summary>
-    /// 格子容器控件 - 表示LayoutContainer中的一个区域
-    /// </summary>
-    [Designer("System.Windows.Forms.Design.ScrollableControlDesigner, System.Design")]
-    [ToolboxItem(false)]
-    public class GridCell : Panel
-    {
-        /// <summary>
-        /// 获取网格索引（1-4）
-        /// </summary>
-        [Browsable(false)]
-        public int GridIndex { get; }
-
-        /// <summary>
-        /// 获取或设置布局位置
-        /// </summary>
-        [Browsable(false)]
-        public LayoutPosition Position { get; set; }
-
-        /// <summary>
-        /// 初始化格子容器的新实例
-        /// </summary>
-        public GridCell(int gridIndex)
-        {
-            GridIndex = gridIndex;
-            Position = LayoutPosition.None;
-
-            // 设置默认属性
-            BorderStyle = BorderStyle.None;
-            Dock = DockStyle.None;
-            Padding = new Padding(0);
-            Margin = new Padding(0);
-        }
-
-        protected override void OnControlAdded(ControlEventArgs e)
-        {
-            base.OnControlAdded(e);
-
-            // 设置默认停靠模式
-            if (e.Control.Dock == DockStyle.None)
-            {
-                e.Control.Dock = DockStyle.Fill;
-            }
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-
-            // 在设计模式下显示位置提示
-            if (DesignMode && Controls.Count == 0)
-            {
-                // 绘制提示文本
-                using (Font font = new Font(FontFamily.GenericSansSerif, 8))
-                using (StringFormat format = new StringFormat
-                {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center
-                })
-                {
-                    string text = $"GridCell {GridIndex}\n({Position})";
-                    e.Graphics.DrawString(text, font, SystemBrushes.GrayText, new RectangleF(0, 0, Width, Height), format);
-                }
-            }
-        }
-
-    }
-
-
-    /// <summary>
-    /// LayoutContainer设计器类 - 提供设计时支持
-    /// </summary>
-    public class LayoutContainerDesigner : ParentControlDesigner
-    {
-        private LayoutContainer Control => (LayoutContainer)Component;
-        private ISelectionService _selectionService;
-        private IComponentChangeService _changeService;
-        private bool _draggingSplitter = false;
-        private int _activeSplitterIndex = -1;
-
-        /// <summary>
-        /// 初始化设计器
-        /// </summary>
-        public override void Initialize(IComponent component)
-        {
-            base.Initialize(component);
-
-            // 获取设计器服务
-            _selectionService = (ISelectionService)GetService(typeof(ISelectionService));
-            _changeService = (IComponentChangeService)GetService(typeof(IComponentChangeService));
-
-            // 启用格子的设计模式
-            EnableDesignMode(Control.Panel1, "Panel1");
-            EnableDesignMode(Control.Panel2, "Panel2");
-            EnableDesignMode(Control.Panel3, "Panel3");
-            EnableDesignMode(Control.Panel4, "Panel4");
-        }
-
-        /// <summary>
-        /// 设置设计器中子控件的行为
-        /// </summary>
-        protected override void PreFilterProperties(IDictionary properties)
-        {
-            base.PreFilterProperties(properties);
-
-            // 隐藏不需要在属性窗口中显示的属性
-            properties.Remove("Controls");
-            properties.Remove("DefaultSize");
-            properties.Remove("Padding");
-        }
-
-        /// <summary>
-        /// 重写拖放行为 - 允许在分隔条上操作，但不允许直接拖放到LayoutContainer上
-        /// </summary>
-        protected override bool GetHitTest(Point point)
-        {
-            // 将坐标从设计器视图转换到控件坐标
-            Point controlPoint = Control.PointToClient(point);
-
-            // 检查点是否在分隔条上
-            int splitterIndex = Control.GetSplitterIndexAtPoint(controlPoint);
-            if (splitterIndex >= 0)
-            {
-                // 如果在分隔条上，记录当前正在拖动的分隔条
-                if (!_draggingSplitter)
-                {
-                    _draggingSplitter = true;
-                    _activeSplitterIndex = splitterIndex;
-                    Control.BeginSplitterDrag(splitterIndex);
-                }
-                return true;
-            }
-            else if (_draggingSplitter)
-            {
-                // 鼠标松开,已完成拖动
-                if (LayoutContainer.MouseButtons == MouseButtons.None)
-                {
-                    _draggingSplitter = false;
-                    _activeSplitterIndex = -1;
-                    Control.EndSplitterDrag();
-                }
-                //按下拖动
-                else
-                {
-                    // 如果已经在拖动，更新分隔条位置
-                    Control.UpdateSplitterPosition(controlPoint);
-                }
-            }
-
-            // 不允许直接在LayoutContainer上拖放
-            return false;
-        }
-
-        /// <summary>
-        /// 确定控件是否可以被这个设计器处理
-        /// </summary>
-        public override bool CanParent(Control control)
-        {
-            // 只允许GridCell作为LayoutContainer的直接子控件
-            return control is GridCell;
-        }
-
-        /// <summary>
-        /// 绘制设计时的辅助元素
-        /// </summary>
-        protected override void OnPaintAdornments(PaintEventArgs pe)
-        {
-            base.OnPaintAdornments(pe);
-
-            // 在设计时绘制分隔条
-            Control.PaintSplitters(pe);
-        }
-
-        public override DesignerActionListCollection ActionLists
-        {
-            get
-            {
-                DesignerActionListCollection actionLists = new DesignerActionListCollection();
-                actionLists.Add(new LayoutContainerActionList(Control));
-                return actionLists;
-            }
-        }
-
-        /// <summary>
-        /// 清理设计器资源
-        /// </summary>
-        protected override void Dispose(bool disposing)
-        {
-            _selectionService = null;
-            _changeService = null;
-
-            base.Dispose(disposing);
-        }
-    }
-
-
-    public class LayoutContainerActionList : DesignerActionList
-    {
-        private LayoutContainer layoutContainer;
-        private readonly IDesignerHost _host;
-        private bool isDocked = false;
-
-        public LayoutContainerActionList(IComponent component) : base(component)
-        {
-            layoutContainer = component as LayoutContainer;
-            _host = GetService(typeof(IDesignerHost)) as IDesignerHost;
-            isDocked = layoutContainer.Dock == DockStyle.Fill;
-        }
-
-        //private string GetActionName()
-        //{
-        //    if (Component is null)
-        //    {
-        //        return null;
-        //    }
-
-        //    PropertyDescriptor dockProp = GetPropertyByName("Dock");
-        //    if (dockProp != null)
-        //    {
-        //        DockStyle dockStyle = (DockStyle)dockProp.GetValue(layoutContainer);
-        //        if (dockStyle == DockStyle.Fill)
-        //        {
-        //            return "取消在父容器中停靠";
-        //        }
-        //        else
-        //        {
-        //            return "在父容器中停靠";
-        //        }
-        //    }
-
-        //    return null;
-        //}
-
-
-        public LayoutMode LayoutMode
-        {
-            get => layoutContainer.LayoutModeValue;
-            set
-            {
-                PropertyDescriptor property = TypeDescriptor.GetProperties(layoutContainer)["LayoutModeValue"];
-                GetPropertyByName("LayoutModeValue").SetValue(layoutContainer, value);
-
-            }
-        }
-
-
-
-        public void ToggleDockInParent()
-        {
-            if (layoutContainer.Parent == null)
-            {
-                return;
-            }
-            if (!isDocked)
-            {
-                layoutContainer.Dock = DockStyle.Fill;
-                isDocked = true;
-            }
-            else
-            {
-                layoutContainer.Dock = DockStyle.None;
-                isDocked = false;
-            }
-
-        }
-
-        //public override DesignerActionItemCollection GetSortedActionItems()
-        //{
-        //    DesignerActionItemCollection items = new DesignerActionItemCollection();
-        //    string? actionName = GetActionName();
-        //    if (actionName is not null)
-        //    {
-        //        items.Add(new DesignerActionVerbItem(new DesignerVerb(actionName, OnDockActionClick)));
-        //    }
-
-        //    return items;
-        //}
-
-
-        public override DesignerActionItemCollection GetSortedActionItems()
-        {
-            var items = new DesignerActionItemCollection
-            {
-                new DesignerActionHeaderItem("布局设置"),
-                new DesignerActionPropertyItem("LayoutMode", "布局模式", "布局设置", "选择控件的布局模式"),
-                new DesignerActionMethodItem(this, "ToggleDockInParent", isDocked ? "取消在父容器中停靠" : "在父容器中停靠", "布局设置", "设置停靠选项", true)
-
-                //items.Add(new DesignerActionVerbItem(new DesignerVerb(actionName, OnDockActionClick)));
-            };
-
-            return items;
-        }
-
-
-        //private void OnDockActionClick(object sender, EventArgs e)
-        //{
-        //    if (sender is DesignerVerb designerVerb && _host!= null)
-        //    {
-        //        using (DesignerTransaction t = _host.CreateTransaction(designerVerb.Text))
-        //        {
-        //            PropertyDescriptor dockProp = GetPropertyByName("Dock");
-        //            DockStyle dockStyle = (DockStyle)dockProp.GetValue(layoutContainer);
-        //            dockProp.SetValue(layoutContainer, dockStyle == DockStyle.Fill ? DockStyle.None : DockStyle.Fill);
-        //            t.Commit();
-        //        }
-        //    }
-        //}
-
-
-        private PropertyDescriptor GetPropertyByName(string propName)
-        {
-            PropertyDescriptor prop = TypeDescriptor.GetProperties(layoutContainer)[propName];
-            if (prop == null)
-            {
-                throw new ArgumentException("未找到属性", propName);
-            }
-            return prop;
-        }
     }
 
 }
